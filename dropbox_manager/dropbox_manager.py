@@ -10,3 +10,6 @@ class DropboxManager():
 
     def delete_file(self, path):
         return self.dropbox.files_delete(path)
+
+    def download_file(self, download_path, path):
+        return self.dropbox.files_download_to_file(download_path, path)
