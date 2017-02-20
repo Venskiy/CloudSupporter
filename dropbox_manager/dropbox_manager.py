@@ -7,3 +7,6 @@ class DropboxManager():
 
     def get_info_about_account(self):
         return self.dropbox.users_get_current_account()
+
+    def delete_file(self, path):
+        return self.dropbox.files_delete(path)
