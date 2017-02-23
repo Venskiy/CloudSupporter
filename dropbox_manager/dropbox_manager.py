@@ -13,3 +13,6 @@ class DropboxManager():
 
     def download_file(self, download_path, path):
         return self.dropbox.files_download_to_file(download_path, path)
+
+    def upload_file(self, file, path):
+            return self.dropbox.files_upload(file, path)
