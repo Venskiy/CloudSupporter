@@ -12,7 +12,12 @@ class YandexDiskManager(object):
             "Host": "cloud-api.yandex.net"
         }
 
-    def get_disk_metadata(self):
+    def get_info_about_account(self):
         url = self._base_url
+        r = requests.get(url, headers=self.base_headers)
+        return r.json()
+
+    def files_list(self):
+        url = self._base_url + 'resources/files'
         r = requests.get(url, headers=self.base_headers)
         return r.json()

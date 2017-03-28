@@ -13,7 +13,7 @@ def main():
     # dropbox.upload_file(data, '/Dropbox/requirements.txt')
     #print(dropbox.files_list())
     yandex_disk = YandexDiskManager(MY_YANDEX_TOKEN)
-    print(yandex_disk.get_disk_metadata())
+    print(yandex_disk.files_list())
 
 
 if __name__ == '__main__':
