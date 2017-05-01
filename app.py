@@ -2,18 +2,13 @@ from __future__ import print_function
 import httplib2
 import sys
 import os
-import urllib.request
+import requests
 
 import dropbox
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
-
-from dropbox_manager.constants import DROPBOX_TOKEN
-from dropbox_manager.dropbox_manager import DropboxManager
-from yandex_disk.constants import MY_YANDEX_TOKEN
-from yandex_disk.yandex_disk_manager import YandexDiskManager
 
 
 MY_DROPBOX_APP_KEY = 'i58xh5qigf55ma1'
@@ -23,9 +18,12 @@ SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'CloudManager'
 
+MY_YANDEX_APP_ID = '66fbabb28cbb4914a14466e3126b9963'
+MY_YANDEX_APP_SECRET = '6f2fdf97736a4fffa48a5377526ef616'
+
 
 def play_media_file(link):
-    os.system('gst-launch-1.0 playbin uri=%s >/dev/null' % link)
+    os.system('gst-launch-1.0 playbin uri="%s" &>/dev/null' % link)
 
 def dropbox_obtain_access_token():
     flow = dropbox.client.DropboxOAuth2FlowNoRedirect(MY_DROPBOX_APP_KEY, MY_DROPBOX_APP_SECRET)
@@ -60,9 +58,7 @@ def get_credentials():
     return credentials
 
 def get_link_to_file(files, filename):
-    print(filename)
     for file in files:
-        print(file['name'])
         if file['name'] == filename:
             return file['webContentLink']
     return ''
@@ -78,22 +74,42 @@ def play_file_from_google(filename):
     link = get_link_to_file(files, filename)
     play_media_file(link)
 
+def yandex_obtain_user_code():
+    print('1. Go to: https://oauth.yandex.ru/authorize?response_type=code&client_id=66fbabb28cbb4914a14466e3126b9963')
+    print('2. Click "Allow" (you might have to log in first)')
+    print('3. Copy the authorization code.')
+    code = input('Enter the authorization code here: ')
+    return code
+
+def yandex_obtain_access_token():
+    code = yandex_obtain_user_code()
+    response = requests.post('https://oauth.yandex.ru/token', 
+                             data = {'grant_type': 'authorization_code', 
+                                     'code': code,
+                                     'client_id': MY_YANDEX_APP_ID,
+                                     'client_secret': MY_YANDEX_APP_SECRET})
+    return response.json()['access_token']
+
+def play_file_from_yandex(path):
+    access_token = yandex_obtain_access_token()
+    url = 'https://cloud-api.yandex.net/v1/disk/resources/download?path=%s' % path
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': 'OAuth %s' % access_token,
+        'Host': 'cloud-api.yandex.net'
+    }
+    response = requests.get(url, headers=headers)
+    play_media_file(response.json()['href'])
+
 def main():
-    #dropbox = DropboxManager(DROPBOX_TOKEN)
-    # print(dropbox.get_info_about_account())
-    # print(dropbox.download_file('pow.png', '/kolya.png'))
-    # with open('requirements.txt', 'rb') as f:
-    #     data = f.read()
-    # dropbox.upload_file(data, '/Dropbox/requirements.txt')
-    #print(dropbox.files_list())
     path = str(sys.argv[1])
     service = path.split('/')[1]
     if service == 'dropbox':
         play_file_from_dropbox(path[8:])
     elif service == 'google':
         play_file_from_google(path.split('/')[len(path.split('/')) - 1])
-    # yandex_disk = YandexDiskManager(MY_YANDEX_TOKEN)
-    # print(yandex_disk.files_list())
+    elif service == 'yandex':
+        play_file_from_yandex(path[7:])
 
 
 if __name__ == '__main__':
