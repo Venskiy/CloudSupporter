@@ -22,6 +22,15 @@ MY_YANDEX_APP_ID = '66fbabb28cbb4914a14466e3126b9963'
 MY_YANDEX_APP_SECRET = '6f2fdf97736a4fffa48a5377526ef616'
 
 
+try:
+    import argparse
+    parser = argparse.ArgumentParser(parents=[tools.argparser])
+    parser.add_argument('filename', nargs ='+', action = 'store')
+    flags = parser.parse_args()
+except ImportError:
+    flags = None
+
+
 def play_media_file(link):
     os.system('gst-launch-1.0 playbin uri="%s" &>/dev/null' % link)
 
@@ -36,7 +45,15 @@ def dropbox_obtain_access_token():
     return access_token
 
 def play_file_from_dropbox(path):
-    access_token = dropbox_obtain_access_token()
+    if os.path.exists('.dropbox_access_token'):
+        file = open('.dropbox_access_token', 'r')
+        access_token = file.read()
+        file.close()
+    else:
+        access_token = dropbox_obtain_access_token()
+        file = open('.dropbox_access_token', 'w')
+        file.write(access_token)
+        file.close()
     dropbox_client = dropbox.dropbox.Dropbox(access_token)
     link = dropbox_client.files_get_temporary_link(path).link
     play_media_file(link)
@@ -48,13 +65,13 @@ def get_credentials():
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
                                    'drive-python-quickstart.json')
-
     store = Storage(credential_path)
     credentials = store.get()
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        credentials = tools.run_flow(flow, store)
+        credentials = tools.run_flow(flow, store, flags)
+
     return credentials
 
 def get_link_to_file(files, filename):
@@ -91,7 +108,15 @@ def yandex_obtain_access_token():
     return response.json()['access_token']
 
 def play_file_from_yandex(path):
-    access_token = yandex_obtain_access_token()
+    if os.path.exists('.yandex_access_token'):
+        file = open('.yandex_access_token', 'r')
+        access_token = file.read()
+        file.close()
+    else:
+        access_token = yandex_obtain_access_token()
+        file = open('.yandex_access_token', 'w')
+        file.write(access_token)
+        file.close()
     url = 'https://cloud-api.yandex.net/v1/disk/resources/download?path=%s' % path
     headers = {
         'Accept': 'application/json',

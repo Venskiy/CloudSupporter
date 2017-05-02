@@ -1,6 +1,8 @@
 # custom
 constants_local.py
 client_secret.json
+.yandex_access_token
+.dropbox_access_token
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
